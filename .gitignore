@@ -127,3 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+local.py
+fsm_data.csv
