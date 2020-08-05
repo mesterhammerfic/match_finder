@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 local.py
 fsm_data.csv
+*_data.csv
