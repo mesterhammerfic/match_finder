@@ -29,6 +29,23 @@ def calculate_metric_average(metric, fighter_id, date, df):
     fighter_metric = fighter_history[metric].mean()
     return fighter_metric
 
+def calculate_3_fight_average(metric, fighter_id, date, df):
+    """
+    input: fighter_link - str, a unique fighter identifier
+           date - datetime64, cut off date, metric will be calculated using every fight up until this date
+           df - dataframe, a fighter-instance table containing the metric
+    output: float, the metric for the 3 fights prior to the date
+    """
+    fighter_history = df[(df['fighter_id']==fighter_id)&
+                         (df['Date']<date)].sort_values('Date')
+
+    last_3 = fighter_history['bout_id'].unique()[-3:]
+    mask = fighter_history['bout_id'].map(lambda x: True if x in last_3 else False)
+    last_3_stats=fighter_history[mask]
+
+    fighter_metric = last_3_stats[metric].mean()
+    return fighter_metric
+
 def black_list_entry(entry, black_list):
     return entry not in black_list
 
@@ -60,7 +77,7 @@ def create_fighter_bout_instance_table(data):
     data['fighter_bout_inst'] = data['bout_id'] + data['fighter_id']
     fighter_bout_inst_group = data.groupby(['fighter_bout_inst'])
 
-    sss_bout = fighter_bout_inst_group.sig_str_successful.sum()
+    sss_bout = fighter_bout_inst_group.sig_str_successful.mean()
     date = fighter_bout_inst_group['Date'].max()
     fighter_id = fighter_bout_inst_group['fighter_id'].max()
     bout_id = fighter_bout_inst_group['bout_id'].max()
