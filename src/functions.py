@@ -25,7 +25,7 @@ def calculate_metric_average(metric, fighter_id, date, df):
     output: float, the metric for the fighter up until the date
     """
     fighter_history = df[(df['fighter_id']==fighter_id)&
-                         (df['Date']<date)]
+                         (df['date']<date)]
     fighter_metric = fighter_history[metric].mean()
     return fighter_metric
 
@@ -37,7 +37,7 @@ def calculate_3_fight_average(metric, fighter_id, date, df):
     output: float, the metric for the 3 fights prior to the date
     """
     fighter_history = df[(df['fighter_id']==fighter_id)&
-                         (df['Date']<date)].sort_values('Date')
+                         (df['date']<date)].sort_values('Date')
 
     last_3 = fighter_history['bout_id'].unique()[-3:]
     mask = fighter_history['bout_id'].map(lambda x: True if x in last_3 else False)
@@ -57,13 +57,14 @@ def format_data(data, fighter=True, bout=True, event=True):
             round column converted to string, 
             and all id columns
     """
-    data['Date'] = data['Date'].map(pd.to_datetime)
+    data['date'] = pd.to_datetime(data['Date'])
     data['round'] = data['round'].map(str)
     data = get_all_ids(data, fighter=fighter, bout=bout, event=event)
     data.drop_duplicates(inplace=True)
     return data
 
-def create_fighter_bout_instance_table(data):
+
+def create_fighter_bout_instance_table(data, target):
     """
     input: dataframe, a formatted fighter round instance table, either general stats or strike stats.
     output: new fighter bout instance dataframe 
@@ -77,12 +78,12 @@ def create_fighter_bout_instance_table(data):
     data['fighter_bout_inst'] = data['bout_id'] + data['fighter_id']
     fighter_bout_inst_group = data.groupby(['fighter_bout_inst'])
 
-    sss_bout = fighter_bout_inst_group.sig_str_successful.mean()
-    date = fighter_bout_inst_group['Date'].max()
+    ssa_m = fighter_bout_inst_group[target].mean()
+    date = fighter_bout_inst_group['date'].max()
     fighter_id = fighter_bout_inst_group['fighter_id'].max()
     bout_id = fighter_bout_inst_group['bout_id'].max()
 
-    fighter_bout_inst = pd.DataFrame(dict(bout_id = bout_id, fighter_id = fighter_id, date = date, sss_bout = sss_bout))
+    fighter_bout_inst = pd.DataFrame(dict(bout_id = bout_id, fighter_id = fighter_id, date = date, ssa_m = ssa_m))
     return fighter_bout_inst
 
 
