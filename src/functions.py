@@ -42,9 +42,11 @@ def calculate_3_fight_average(metric, fighter_id, date, df):
     last_3 = fighter_history['bout_id'].unique()[-3:]
     mask = fighter_history['bout_id'].map(lambda x: True if x in last_3 else False)
     last_3_stats=fighter_history[mask]
-
-    fighter_metric = last_3_stats[metric].mean()
-    return fighter_metric
+    if len(last_3_stats)>=3:
+        fighter_metric = last_3_stats[metric].mean()
+        return fighter_metric
+    else:
+        return pd.NA
 
 def black_list_entry(entry, black_list):
     return entry not in black_list
