@@ -1,6 +1,12 @@
 import pandas as pd
 import pickle
 
+
+"""
+===================================================================================
+Data Cleaning
+===================================================================================
+"""
 def get_id(string):
     """
     input: ufcstats link (string)
@@ -9,6 +15,13 @@ def get_id(string):
     return string.split('/')[-1]
 
 def get_all_ids(df, fighter=True, bout=True, event=True):
+    """
+    input: dataframe with fighter_link, bout_link, and/or event_link columns
+    output: dataframe with new columns set to the last string of characters of the link
+            uses get_id()
+            
+    the resulting ids are for easier readability during trouble shooting only
+    """
     if fighter:
         df['fighter_id'] = df['fighter_link'].map(get_id)
     if bout:
@@ -17,6 +30,93 @@ def get_all_ids(df, fighter=True, bout=True, event=True):
         df['event_id'] = df['event_link'].map(get_id)
     return df
 
+def black_list_entry(entry, black_list):
+    """
+    This function will be deprecated soon and replaced with pandas isin method
+    
+    returns True if the entry is in the black_list
+    used to create pandas masks for data cleaning
+    
+    example:
+    df.column.map(lambda x: black_list_entry(x, [values to block]))
+    """
+    
+    return entry not in black_list
+
+def format_data(data, fighter=True, bout=True, event=True):
+    """
+    input: data - dataframe, either the general or the strikes dataframe from the postgresql database
+    output: dataframe with no duplicates, 
+            data column formatted to datetime, 
+            round column converted to string, 
+            and all id columns
+    """
+    data['date'] = pd.to_datetime(data['Date'])
+    data['round'] = data['round'].map(str)
+    data = get_all_ids(data, fighter=fighter, bout=bout, event=event)
+    data.drop_duplicates(inplace=True)
+    return data
+
+    
+def remove_debut_bouts(df):
+    """
+    input: dataframe, bout or round instances with bout_id column
+    output: dataframe with all debut bouts filtered out
+    """
+    debut_bouts = pickle.load(open('../../src/debut_bouts.pkl', 'rb'))
+    
+    mask = df['bout_id'].map(lambda x: black_list_entry(x, debut_bouts))
+    df = df[mask]
+
+    return df
+
+def get_minutes(df):
+    """
+    input: dataframe with Time column
+    output: dataframe with minutes column for each round
+    """
+    # create round_id
+    df['round_id'] = df['bout_id']+df['round']
+    # group into bouts
+    bout_groups = df.groupby('bout_id')
+    # create dataframe with round_id as index
+    round_id = bout_groups.round_id.max()
+    round_length = bout_groups.Time.max()
+    # create row for final rounds
+    final_round_lengths = pd.DataFrame(dict(round_id = round_id, round_length = round_length))
+    final_round_lengths.set_index('round_id', inplace=True)
+    # Fill in non-final rounds
+    new_data = df.join(final_round_lengths, on='round_id', how='outer')
+    new_data.round_length = new_data.round_length.fillna('5:00')
+    # convert to timedelta
+    new_data.round_length = '00:0' + new_data.round_length
+    new_data.round_length = pd.to_timedelta(new_data.round_length)
+    new_data.round_length.describe()
+    
+    #convert to minutes as a float
+    new_data['minutes'] = new_data.round_length.map(lambda x: x.total_seconds()/60)
+    return new_data
+
+    
+def filter_rounds(df):
+    """
+    returns the dataframe (df) with all non-5 minute rounds removed
+    """
+    non_standard_rounds = ['No Time Limit', '1 Rnd + OT (31-5)', '1 Rnd (20)', '1 Rnd (30)',
+                   '1 Rnd + OT (30-5)', '1 Rnd + OT (30-3)', '1 Rnd (15)', '1 Rnd (18)',
+                   '1 Rnd + OT (27-3)', '1 Rnd (10)', '1 Rnd + 2OT (15-3-3)',
+                   '1 Rnd + OT (12-3)', '1 Rnd + 2OT (24-3-3)', '1 Rnd + OT (15-3)',
+                   '1 Rnd (12)']
+    mask = df.Timeformat.map(lambda x: black_list_entry(x, non_standard_rounds))
+    data = df[mask]
+    data.Timeformat.value_counts()
+    return data
+
+"""
+===================================================================================
+Metric Calculation
+===================================================================================
+"""
 def calculate_metric_average(metric, fighter_id, date, df):
     """
     input: fighter_link - str, a unique fighter identifier
@@ -48,158 +148,7 @@ def calculate_3_fight_average(metric, fighter_id, date, df):
     else:
         return pd.NA
 
-def black_list_entry(entry, black_list):
-    return entry not in black_list
-
-def format_data(data, fighter=True, bout=True, event=True):
-    """
-    input: data - dataframe, either the general or the strikes dataframe from the postgresql database
-    output: dataframe with no duplicates, 
-            data column formatted to datetime, 
-            round column converted to string, 
-            and all id columns
-    """
-    data['date'] = pd.to_datetime(data['Date'])
-    data['round'] = data['round'].map(str)
-    data = get_all_ids(data, fighter=fighter, bout=bout, event=event)
-    data.drop_duplicates(inplace=True)
-    return data
-
-
-def create_fighter_bout_instance_table(data, target):
-    """
-    input: dataframe, a formatted fighter round instance table, either general stats or strike stats.
-    output: new fighter bout instance dataframe 
-
-    A fighter-bout instance represents one fighter in one bout.
-     - The same fighter has exactly one fighter-bout instance for every single bout he has been in. 
-     - Every bout has exactly two fighter-bout instances, one for each fighter in the bout. 
-    In this case a fighter-bout instance is assigned a unique identifier comprised of the bout_id combined with the fighter_link.
-    """
     
-    data['fighter_bout_inst'] = data['bout_id'] + data['fighter_id']
-    fighter_bout_inst_group = data.groupby(['fighter_bout_inst'])
-
-    ssa_m = fighter_bout_inst_group[target].mean()
-    date = fighter_bout_inst_group['date'].max()
-    fighter_id = fighter_bout_inst_group['fighter_id'].max()
-    bout_id = fighter_bout_inst_group['bout_id'].max()
-
-    fighter_bout_inst = pd.DataFrame(dict(bout_id = bout_id, fighter_id = fighter_id, date = date, ssa_m = ssa_m))
-    return fighter_bout_inst
-
-
-def merge_fighter_instances(instances_df, flip=False, rounds=False):
-    """
-    input: instance table where each row represents one fighter in one bout (in one round, if round instances)
-    output: table where each row represents both fighters in a single bout (or round, if round instances)
-    
-    example input
-    fighter_bout_instance_table:
-    name:     |bout: 
-    fighter_0 |1
-    fighter_1 |1
-    fighter_0 |2
-    fighter_1 |2
-    
-    example output
-    bout_table
-    name_0:   |name_1:    |bout: 
-    fighter_0 |fighter_1  |1
-    fighter_0 |fighter_1  |2
-    """
-    if rounds:
-        instances_df['round_id'] = instances_df['bout_id']+instances_df['round']
-        key = 'round_id'
-    else:
-        key = 'bout_id'
-        
-    instances_df['inst_id'] = instances_df['bout_id'] + instances_df['fighter_id']
-    
-    fighter_0 = list(instances_df.groupby(key).inst_id.max())
-    fighter_1 = list(instances_df.groupby(key).inst_id.min())
-
-    mask = instances_df['inst_id'].map(lambda x: black_list_entry(x, fighter_0))
-    instances_df_1 = instances_df[mask]
-    instances_df_1
-
-    mask = instances_df['inst_id'].map(lambda x: black_list_entry(x, fighter_1))
-    instances_df_0 = instances_df[mask]
-    instances_df_0
-    
-    if flip:
-        model_df = pd.merge(instances_df_1, instances_df_0, on=key, suffixes=('_0', '_1'))
-        return model_df
-    else:
-        model_df = pd.merge(instances_df_0, instances_df_1, on=key, suffixes=('_0', '_1'))
-        return model_df
-    
-    
-def remove_debut_bouts(df):
-    """
-    input: dataframe, bout or round instances with bout_id column
-    output: dataframe with all debut bouts filtered out
-    """
-    debut_bouts = pickle.load(open('../../src/debut_bouts.pkl', 'rb'))
-    
-    mask = df['bout_id'].map(lambda x: black_list_entry(x, debut_bouts))
-    df = df[mask]
-
-    return df
-
-
-
-def get_accuracy(row, stat):
-    """
-    input: dataframe row
-    output: accuracy for a givent stat
-    """
-    if row[stat+'_a'] == 0:
-        return pd.NA
-    else:
-        return row[stat+'_s']/row[stat+'_a']
-
-def get_minutes(df):
-    """
-    input: dataframe with Time column
-    output: dataframe with minutes column for each round
-    """
-    # create round_id
-    df['round_id'] = df['bout_id']+df['round']
-    # group into bouts
-    bout_groups = df.groupby('bout_id')
-    # create dataframe with round_id as index
-    round_id = bout_groups.round_id.max()
-    round_length = bout_groups.Time.max()
-    # create row for final rounds
-    final_round_lengths = pd.DataFrame(dict(round_id = round_id, round_length = round_length))
-    final_round_lengths.set_index('round_id', inplace=True)
-    # Fill in non-final rounds
-    new_data = df.join(final_round_lengths, on='round_id', how='outer')
-    new_data.round_length = new_data.round_length.fillna('5:00')
-    # convert to timedelta
-    new_data.round_length = '00:0' + new_data.round_length
-    new_data.round_length = pd.to_timedelta(new_data.round_length)
-    new_data.round_length.describe()
-    
-    #convert to minutes as a float
-    new_data['minutes'] = new_data.round_length.map(lambda x: x.total_seconds()/60)
-    return new_data
-
-    
-def filter_rounds(df):
-    #filter out non-5-minute rounds
-    non_standard_rounds = ['No Time Limit', '1 Rnd + OT (31-5)', '1 Rnd (20)', '1 Rnd (30)',
-                   '1 Rnd + OT (30-5)', '1 Rnd + OT (30-3)', '1 Rnd (15)', '1 Rnd (18)',
-                   '1 Rnd + OT (27-3)', '1 Rnd (10)', '1 Rnd + 2OT (15-3-3)',
-                   '1 Rnd + OT (12-3)', '1 Rnd + 2OT (24-3-3)', '1 Rnd + OT (15-3)',
-                   '1 Rnd (12)']
-    mask = df.Timeformat.map(lambda x: black_list_entry(x, non_standard_rounds))
-    data = df[mask]
-    data.Timeformat.value_counts()
-    return data
-    
-
 def calculate_stats(df, stat_list):
     """
     input: df - dataframe, round performances
@@ -324,3 +273,89 @@ def calculate_stats_alt(df, stat_list):
     data = data.loc[:,columns_0]
     data.columns = [column[:-2].lower() for column in data.columns]
     return data
+
+def get_accuracy(row, stat):
+    """
+    input: dataframe row
+    output: accuracy for a givent stat
+    """
+    if row[stat+'_a'] == 0:
+        return pd.NA
+    else:
+        return row[stat+'_s']/row[stat+'_a']
+    
+
+"""
+===================================================================================
+Table Transformations
+===================================================================================
+"""
+def create_fighter_bout_instance_table(data, target):
+    """
+    input: dataframe, a formatted fighter round instance table, either general stats or strike stats.
+    output: new fighter bout instance dataframe 
+
+    A fighter-bout instance represents one fighter in one bout.
+     - The same fighter has exactly one fighter-bout instance for every single bout he has been in. 
+     - Every bout has exactly two fighter-bout instances, one for each fighter in the bout. 
+    In this case a fighter-bout instance is assigned a unique identifier comprised of the bout_id combined with the fighter_link.
+    """
+    
+    data['fighter_bout_inst'] = data['bout_id'] + data['fighter_id']
+    fighter_bout_inst_group = data.groupby(['fighter_bout_inst'])
+
+    ssa_m = fighter_bout_inst_group[target].mean()
+    date = fighter_bout_inst_group['date'].max()
+    fighter_id = fighter_bout_inst_group['fighter_id'].max()
+    bout_id = fighter_bout_inst_group['bout_id'].max()
+
+    fighter_bout_inst = pd.DataFrame(dict(bout_id = bout_id, fighter_id = fighter_id, date = date, ssa_m = ssa_m))
+    return fighter_bout_inst
+
+
+def merge_fighter_instances(instances_df, flip=False, rounds=False):
+    """
+    input: instance table where each row represents one fighter in one bout (in one round, if round instances)
+    output: table where each row represents both fighters in a single bout (or round, if round instances)
+    
+    example input
+    fighter_bout_instance_table:
+    name:     |bout: 
+    fighter_0 |1
+    fighter_1 |1
+    fighter_0 |2
+    fighter_1 |2
+    
+    example output
+    bout_table
+    name_0:   |name_1:    |bout: 
+    fighter_0 |fighter_1  |1
+    fighter_0 |fighter_1  |2
+    """
+    if rounds:
+        instances_df['round_id'] = instances_df['bout_id']+instances_df['round']
+        key = 'round_id'
+    else:
+        key = 'bout_id'
+        
+    instances_df['inst_id'] = instances_df['bout_id'] + instances_df['fighter_id']
+    
+    fighter_0 = list(instances_df.groupby(key).inst_id.max())
+    fighter_1 = list(instances_df.groupby(key).inst_id.min())
+
+    mask = instances_df['inst_id'].map(lambda x: black_list_entry(x, fighter_0))
+    instances_df_1 = instances_df[mask]
+    instances_df_1
+
+    mask = instances_df['inst_id'].map(lambda x: black_list_entry(x, fighter_1))
+    instances_df_0 = instances_df[mask]
+    instances_df_0
+    
+    if flip:
+        model_df = pd.merge(instances_df_1, instances_df_0, on=key, suffixes=('_0', '_1'))
+        return model_df
+    else:
+        model_df = pd.merge(instances_df_0, instances_df_1, on=key, suffixes=('_0', '_1'))
+        return model_df
+    
+
