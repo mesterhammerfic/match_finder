@@ -2,7 +2,7 @@
 #### Data Overview
 #### 5 Tables from UFCstats
 1. [Table Summaries](https://github.com/mesterhammerfic/match_stats/new/master#ufcstats-data-tables)
-2. [SQL Schema](https://github.com/mesterhammerfic/match_stats/new/master#postgresql)
+2. [Schema](https://github.com/mesterhammerfic/match_stats/new/master#postgresql)
 3. [Data Dictionaries](https://github.com/mesterhammerfic/match_stats/new/master#3-data-dictionaries)
 
 #### [12 Advanced Statistics Tables]
@@ -29,8 +29,8 @@ fighters.csv|one UFC fighter|2,045                   |link
 general.csv|one fighter in round|26,244              |bout_link + fighter_link + round
 events.csv |one fighter in round|26,244              |bout_link + fighter_link + round
 
-### 2. PostgreSQL
-These 5 tables are then [transferred](notebooks/01_data_cleaning/00_create_database.ipynb) to a local postgresql database with the following schema:
+### 2. Scheme
+These 5 tables are then [transferred](notebooks/01_data_cleaning/00_create_database.ipynb) to a local postgresql database follow this schema:
 <img src="schema.png"
 align="center"
 alt="Markdown Monster icon"
