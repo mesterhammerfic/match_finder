@@ -8,9 +8,9 @@ fighter will behave in a match.
 
 ## Objectives
 1. Develop stats using round by round data from UFCStats.com
- a. Develop metrics that accurately capture a fighters stylistics tendencies and capabilities
- b. Create a way to categorize fighters based on their fighting styles
- c. Create a way to measure how a fighter typically responds to certain fighting styles
+    * Develop metrics that accurately capture a fighters stylistics tendencies and capabilities
+    * Create a way to categorize fighters based on their fighting styles
+    * Create a way to measure how a fighter typically responds to certain fighting styles
 2. Build a machine learning model that uses these stats to predict how many strikes and takedowns will be 
 attempted in each match
 3. Deploy this model as a web application that makes predictions on upcoming fights
@@ -31,7 +31,7 @@ metrics like takedown accuracy. For example, Conor McGregor, one of the best str
 accuracy of 63%. Khabib Nurmagomedov, regarded as the best wrestler in MMA today, has a takedown accuracy of
 only 45%. If taken as a measurement of grappling skill, this stat would not have allowed us to predict that 
 throughout their fight, Khabib took Conor down constantly, eventually winning the fight. Using our takedown 
-differential, Khabib scores a in the top 1% of active UFC fighters, with a 5.14; Conor scores a -.53, which is
+differential, Khabib scores in the top 1% of active UFC fighters, with a 5.14; Conor scores a -.53, which is
 a little below the median of -.23.
 
 ### Data
