@@ -37,15 +37,7 @@ a little below the median of -.23.
 ### Data
 The data I'm using is scraped from the official [UFC stats website](http://www.ufcstats.com/statistics/events/completed),
 which provides round-by-round data on strikes and grappling techniques used in a fight for each fighter. I scraped data
-for every bout up until August 1st. The scraping is cumbersome, and data preparation takes a singificant amount of time, 
-so I provided the [data](data/ufcstats_data) in this repository through 5 separate csv files. The data includes 26,244 rounds across 
-5,688 bouts from 525 UFC events. 5 tables are then transferred to a local postgresql database with the following schema:
-
-<img src="schema.png"
-align="center"
-alt="Markdown Monster icon"
-width="600"/>
-
-Note: each row in general and strikes represents a single fighter in a single round. The unique identifer is made by combining
-the bout_link, fighter_link, and round. General contains information regarding both striking and grappling stats, while
-striking contains information only pertaining to significant strike counts. No stat columns are repeated between each table.
+for every bout up until August 1st. The scraping and data preparation takes a singificant amount of time, so I provided 
+the [data](data/ufcstats_data) with this repository through, as well as 12 [advanced statistics](data/ufc_stats/advanced_stats) 
+CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statistics_by_round.ipynb) from those 5 original tables.
+For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
