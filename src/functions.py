@@ -304,12 +304,12 @@ def create_fighter_bout_instance_table(data, target):
     data['fighter_bout_inst'] = data['bout_id'] + data['fighter_id']
     fighter_bout_inst_group = data.groupby(['fighter_bout_inst'])
 
-    ssa_m = fighter_bout_inst_group[target].mean()
+    target = fighter_bout_inst_group[target].mean()
     date = fighter_bout_inst_group['date'].max()
     fighter_id = fighter_bout_inst_group['fighter_id'].max()
     bout_id = fighter_bout_inst_group['bout_id'].max()
 
-    fighter_bout_inst = pd.DataFrame(dict(bout_id = bout_id, fighter_id = fighter_id, date = date, ssa_m = ssa_m))
+    fighter_bout_inst = pd.DataFrame(dict(bout_id = bout_id, fighter_id = fighter_id, date = date, target = target))
     return fighter_bout_inst
 
 
