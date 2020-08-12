@@ -45,8 +45,39 @@ Mean Poisson Deviance|.143
 R-Squared|.128
 % Within 5 Strikes|47.7%
 
+#### Next Steps
 This and previous model iterations can be found in the [notebooks/03_modelling](notebooks_03_modelling) folder. Attempts 
 to implement min-max scaling, polynomial features, and Random Forest Regressors failed to improve model performance. 
 The features used are believed to lack enough predictive power for any significant improvement, so next steps will focus
 on the development of new features using the original data set.
 
+### Methodology
+This project follows the CRISP-DM model which starts with framing the problem using business understanding and cycles through
+data understanding, data preperation, modelling, and evaluation before moving onto deployement.
+
+<img src=references/CRISPDM_Process_Diagram.png width=400>
+
+Due to the high emphasis on feature engineering, the notebook directory in this project breaks this process down into three stages:
+1. Data Cleaning - new features are created using the original data set.
+2. Data Exploration - new features are examined and tested using EDA.
+3. Modelling - new features used on models to evaluate predictive abilities.
+
+The numbered prefixes of each notebook indicate which iteration they are a part of such that the 01 notebook in datacleaning
+is responsible for creating the features used in the 01 notebook of modelling.
+
+#### Technologies Used
+- Python
+   - Pandas
+   - SciKit-Learn
+   - NumPy
+   - SciPy
+   - SQLAlchemy
+- Jupyter Labs
+- Conda
+- SQL & PostgreSQL
+
+### Contributing/Reproducing
+1. Fork and clone this repo, which includes all necessary data
+2. [Set up](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) the project environment using Conda
+3. Run the 00_create_database notebook to set up your PostgreSQL data tables
+4. Follow the Methodolgy steps outlined in the previous section
