@@ -23,17 +23,6 @@ could have predicted that this fight would be boring, many fans might've saved $
 customers with a way of predicting the likelihood that these fights will be exciting so that they can find 
 events they will enjoy.
 
-### Current State
-I've developed a more effective effective way to measure fighting performance by using Differentials per Minute.
-An example of this would be Takedown Differential per 15 Minutes, which measure how many more takedowns a fighter 
-lands than their opponent. This metric is far more effective at measuring a fighters skill level than popular
-metrics like takedown accuracy. For example, Conor McGregor, one of the best strikers in MMA, has a takedown 
-accuracy of 63%. Khabib Nurmagomedov, regarded as the best wrestler in MMA today, has a takedown accuracy of
-only 45%. If taken as a measurement of grappling skill, this stat would not have allowed us to predict that 
-throughout their fight, Khabib took Conor down constantly, eventually winning the fight. Using our takedown 
-differential, Khabib scores in the top 1% of active UFC fighters, with a 5.14; Conor scores a -.53, which is
-a little below the median of -.23.
-
 ### Data
 The data I'm using is scraped from the official [UFC stats website](http://www.ufcstats.com/statistics/events/completed),
 which provides round-by-round data on strikes and grappling techniques used in a fight for each fighter. I scraped data
@@ -41,3 +30,23 @@ for every bout up until August 1st. The scraping and data preparation takes a si
 the [data](data/ufcstats_data) with this repository through, as well as 12 [advanced statistics](data/ufc_stats/advanced_stats) 
 CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statistics_by_round.ipynb) from those 5 original tables.
 For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
+
+### Modelling
+#### Performance
+The latest model is a Poisson Regressor that uses 40 features to predict the Combined Significant Strike Attempts per 
+Minute in a single fight. The features were scaled using sklearns Standard Scaler object which standardizes values. 
+It's performance was evaluated using the standard metric for Poisson regression, mean Poisson deviance, as well as 
+r-squared, so that it can be compared to other types of models easily. Our goal is to predict at least 95% of the 
+matches to within 5 strikes of the actual result, so this metric is also included.
+
+Metric|Score
+------|-----
+Mean Poisson Deviance|.143
+R-Squared|.128
+% Within 5 Strikes|47.7%
+
+This and previous model iterations can be found in the [notebooks/03_modelling](notebooks_03_modelling) folder. Attempts 
+to implement min-max scaling, polynomial features, and Random Forest Regressors failed to improve model performance. 
+The features used are believed to lack enough predictive power for any significant improvement, so next steps will focus
+on the development of new features using the original data set.
+
