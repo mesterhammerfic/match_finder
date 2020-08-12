@@ -27,7 +27,7 @@ events they will enjoy.
 The data I'm using is scraped from the official [UFC stats website](http://www.ufcstats.com/statistics/events/completed),
 which provides round-by-round data on strikes and grappling techniques used in a fight for each fighter. I scraped data
 for every bout up until August 1st. The scraping and data preparation takes a singificant amount of time, so I provided 
-the [data](data/ufcstats_data) with this repository through, as well as 12 [advanced statistics](data/ufc_stats/advanced_stats) 
+the [data](data/ufcstats_data) with this repository through 5 CSVs, as well as 12 [advanced statistics](data/ufc_stats/advanced_stats) 
 CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statistics_by_round.ipynb) from those 5 original tables.
 For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
 
