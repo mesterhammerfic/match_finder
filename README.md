@@ -32,12 +32,21 @@ CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statist
 For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
 
 ### Modelling
-#### Performance
+#### First Simple Model
+The FSM for this project looked only at each fighters career average successful significant strikes per round and attempted
+to predict the combined total number of successful significant strikes for the entire bout. This target was changed because
+it does take into account differing match lengths. For instance, main event fights, which last 5 rounds will have significantly
+higher strike counts just because they last longer.
+
+
+#### Latest Model
 The latest model is a Poisson Regressor that uses 40 features to predict the Combined Significant Strike Attempts per 
-Minute in a single fight. The features were scaled using sklearns Standard Scaler object which standardizes values. 
-It's performance was evaluated using the standard metric for Poisson regression, mean Poisson deviance, as well as 
-r-squared, so that it can be compared to other types of models easily. Our goal is to predict at least 95% of the 
-matches to within 5 strikes of the actual result, so this metric is also included.
+Minute in a single fight. The features included the 3 fight and career averages for Significant Strike Attempts per 
+Minute as well as differentials for grappling and striking stats including takedowns, ground strikes, distance strikes,
+etc. The features were scaled using sklearns Standard Scaler object which standardizes values. It's performance was 
+evaluated using the standard metric for Poisson regression, mean Poisson deviance, as well as r-squared, so that it 
+can be compared to other types of models easily. Our goal is to predict at least 95% of the matches to within 5 strikes 
+of the actual result, so this metric is also included.
 
 Metric|First Simple Model|Latest Model
 ------|------------------|------------
