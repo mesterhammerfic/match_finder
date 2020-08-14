@@ -6,6 +6,9 @@ To provide predictions on the stylistic outcome of an MMA match so that even cas
 will enjoy even if they have no prior knowledge of the fighters. Essentially, I am trying to predict how each
 fighter will behave in a match.
 
+##### Current Status
+A report on the current status of the project can be found [here](reports/match_stats.pdf)
+
 ## Objectives
 1. Develop stats using round by round data from UFCStats.com
     * Develop metrics that accurately capture a fighters stylistics tendencies and capabilities
