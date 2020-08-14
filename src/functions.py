@@ -53,8 +53,6 @@ def format_data(data, fighter=True, bout=True, event=True):
     """
     data['date'] = pd.to_datetime(data['Date'])
     data['round'] = data['round'].map(str)
-    data = get_all_ids(data, fighter=fighter, bout=bout, event=event)
-    data.drop_duplicates(inplace=True)
     return data
 
     
@@ -81,7 +79,7 @@ def get_minutes(df):
     bout_groups = df.groupby('bout_id')
     # create dataframe with round_id as index
     round_id = bout_groups.round_id.max()
-    round_length = bout_groups.Time.max()
+    round_length = bout_groups.time.max()
     # create row for final rounds
     final_round_lengths = pd.DataFrame(dict(round_id = round_id, round_length = round_length))
     final_round_lengths.set_index('round_id', inplace=True)
@@ -91,26 +89,42 @@ def get_minutes(df):
     # convert to timedelta
     new_data.round_length = '00:0' + new_data.round_length
     new_data.round_length = pd.to_timedelta(new_data.round_length)
-    new_data.round_length.describe()
     
     #convert to minutes as a float
     new_data['minutes'] = new_data.round_length.map(lambda x: x.total_seconds()/60)
     return new_data
 
     
-def filter_rounds(df):
+def five_minute_rounds(df):
     """
     returns the dataframe (df) with all non-5 minute rounds removed
     """
-    non_standard_rounds = ['No Time Limit', '1 Rnd + OT (31-5)', '1 Rnd (20)', '1 Rnd (30)',
-                   '1 Rnd + OT (30-5)', '1 Rnd + OT (30-3)', '1 Rnd (15)', '1 Rnd (18)',
-                   '1 Rnd + OT (27-3)', '1 Rnd (10)', '1 Rnd + 2OT (15-3-3)',
-                   '1 Rnd + OT (12-3)', '1 Rnd + 2OT (24-3-3)', '1 Rnd + OT (15-3)',
-                   '1 Rnd (12)']
-    mask = df.Timeformat.map(lambda x: black_list_entry(x, non_standard_rounds))
+    standard_rounds = ['5 Rnd (5-5-5-5-5)', 
+                       '3 Rnd (5-5-5)', 
+                       '3 Rnd + OT (5-5-5-5)',
+                       '2 Rnd (5-5)']
+    mask = df.timeformat.isin(standard_rounds)
     data = df[mask]
-    data.Timeformat.value_counts()
     return data
+
+
+def get_successful(string):
+    """
+    input: a string that follows the format: [number landed] of [number thrown] 
+                                            ie 11 of 30 means they landed 11 strikes out of 30
+    output: an integer of the number landed
+                                            ie 11 from the example above
+    """
+    return int(string.split(' ')[0])
+
+def get_attempts(string):
+    """
+    input: a string that follows the format: [number landed] of [number thrown] 
+                                            ie 11 of 30 means they landed 11 strikes out of 30
+    output: an integer of the number attempted
+                                            ie 30 from the example above
+    """
+    return int(string.split(' ')[-1])
 
 """
 ===================================================================================
@@ -220,29 +234,17 @@ def calculate_stats(df, stat_list):
 
 def calculate_stats_alt(df, stat_list):
     """
-    This operates the same as the calculate_stats except that it is used only for stats
-    that do not distinguish between attempts and successes. Accuracy and Defense is
-    not calculated in this function.
-    
-    input: df - dataframe, round performances
+    input: df - dataframe, rounds table
            stat - the type of technique being measured {sig_str, td, total_str, td, etc.}
-    output: dataframe with the the following metrics
-     - A_PR_DI - Attempt Differential
-     - S_PR_DI - Success Differential
-     - A_P1M -  Attempts Per 1 Minute
-     - S_P1M -  Successes Per 1 Minute
-     - A_P15M -  Attempts Per 15 Minute
-     - S_P15M -  Successes Per 15 Minute
-     - A_P1M_DI -  Attempts Per 1 Minute
-     - S_P1M_DI -  Successes Per 1 Minute
-     - A_P15M_DI -  Attempts Per 15 Minute
-     - S_P15M_DI -  Successes Per 15 Minute
+    output: dataframe with the the following metrics calculated for each stat (ss, td, etc)
+     - _pr_di - Per Round Differential
+     - _p1m - Per 1 Minute
+     - _p15m - Per 15 Minute
+     - _p1m_di- Per 1 Minute Differential
+     - _p15m_di - Attempts Per 15 Minute
     """
-    print('formatting data\n')
-    data = format_data(df, event=False)
-    
     #remove non-5-minute rounds
-    data = filter_rounds(data)
+    data = five_minute_rounds(df)
     
     # calculate minutes
     print('calculating minutes\n')
@@ -251,7 +253,7 @@ def calculate_stats_alt(df, stat_list):
         data[stat+'_p1m'] = data[stat] / data.minutes
         data[stat+'_p15m'] = data[stat] / (data.minutes/15)
     
-    # add opponent stats to each row for defense and differential calculation
+    # add opponent stats to each row for differential calculation
     print('combining rows\n')
     data_0 = merge_fighter_instances(data, rounds=True)
     data_1 = merge_fighter_instances(data, rounds=True, flip=True)
@@ -332,25 +334,34 @@ def merge_fighter_instances(instances_df, flip=False, rounds=False):
     fighter_0 |fighter_1  |1
     fighter_0 |fighter_1  |2
     """
+    # set the primary key for the rows to be joined on
     if rounds:
         instances_df['round_id'] = instances_df['bout_id']+instances_df['round']
         key = 'round_id'
     else:
         key = 'bout_id'
-        
+    
+    # identifier for each fighter in each bout
     instances_df['inst_id'] = instances_df['bout_id'] + instances_df['fighter_id']
     
+    # Create two lists of instance IDs, 
+    # both list has one fighter per bout, 
+    # both lists are unique.
+    # if they are concatenated together they would 
+    # create the original list of fighter instances
     fighter_0 = list(instances_df.groupby(key).inst_id.max())
     fighter_1 = list(instances_df.groupby(key).inst_id.min())
-
-    mask = instances_df['inst_id'].map(lambda x: black_list_entry(x, fighter_0))
-    instances_df_1 = instances_df[mask]
-    instances_df_1
-
-    mask = instances_df['inst_id'].map(lambda x: black_list_entry(x, fighter_1))
+    
+    # filter the instances dataframe using the lists above
+    mask = instances_df['inst_id'].isin(fighter_0)
     instances_df_0 = instances_df[mask]
     instances_df_0
+
+    mask = instances_df['inst_id'].isin(fighter_1)
+    instances_df_1 = instances_df[mask]
+    instances_df_1
     
+    # Used for creating advanced statistics. reverses the order of the fighters
     if flip:
         model_df = pd.merge(instances_df_1, instances_df_0, on=key, suffixes=('_0', '_1'))
         return model_df
