@@ -6,6 +6,9 @@ To provide predictions on the stylistic outcome of an MMA match so that even cas
 will enjoy even if they have no prior knowledge of the fighters. Essentially, I am trying to predict how each
 fighter will behave in a match.
 
+##### Current Status
+A report on the current status of the project can be found [here](reports/match_stats.pdf)
+
 ## Objectives
 1. Develop stats using round by round data from UFCStats.com
     * Develop metrics that accurately capture a fighters stylistics tendencies and capabilities
@@ -18,10 +21,10 @@ attempted in each match
 ### Context
 The current pay-per-view price of a UFC event is $64.99, which can be a lot of money to spend on an event you 
 might not even enjoy. Oftentimes fans are dissapointed by what they thought would be an exciting main event, 
-like the matchup between Israel Adesanya and Yoel Romero which drew criticism for it's lack of action. If we
-could have predicted that this fight would be boring, many fans might've saved $65. Our goal is to provide 
-customers with a way of predicting the likelihood that these fights will be exciting so that they can find 
-events they will enjoy.
+like the matchup between Israel Adesanya and Yoel Romero which drew [criticism](https://talksport.com/sport/mma/679619/dana-white-ufc-248-adesanya-romero/) 
+for it's lack of action. If we could have predicted that this fight would be boring, many fans might've saved 
+$65. Our goal is to provide customers with a way of predicting the likelihood that these fights will be exciting 
+so that they can find events they will enjoy.
 
 ### Data
 The data I'm using is scraped from the official [UFC stats website](http://www.ufcstats.com/statistics/events/completed),
@@ -32,18 +35,40 @@ CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statist
 For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
 
 ### Modelling
-#### Performance
-The latest model is a Poisson Regressor that uses 40 features to predict the Combined Significant Strike Attempts per 
-Minute in a single fight. The features were scaled using sklearns Standard Scaler object which standardizes values. 
-It's performance was evaluated using the standard metric for Poisson regression, mean Poisson deviance, as well as 
-r-squared, so that it can be compared to other types of models easily. Our goal is to predict at least 95% of the 
-matches to within 5 strikes of the actual result, so this metric is also included.
+#### First Simple Model
+The FSM for this project looked only at each fighters career average successful significant strikes per round and attempted
+to predict the combined total number of successful significant strikes for the entire bout. This target was changed because
+it does take into account differing match lengths. For instance, main event fights, which last 5 rounds will have significantly
+higher strike counts just because they last longer.
 
-Metric|Score
-------|-----
-Mean Poisson Deviance|.143
-R-Squared|.128
-% Within 5 Strikes|47.7%
+
+#### Latest Model
+The latest model is a Poisson Regressor that uses 40 features to predict the Combined Significant Strike Attempts per 
+Minute in a single fight. The features included the 3 fight and career averages for Significant Strike Attempts per 
+Minute as well as differentials for grappling and striking stats including takedowns, ground strikes, distance strikes,
+etc. The features were scaled using sklearns Standard Scaler object which standardizes values. It's performance was 
+evaluated using the standard metric for Poisson regression, mean Poisson deviance, as well as r-squared, so that it 
+can be compared to other types of models easily. Our goal is to predict at least 95% of the matches to within 5 strikes 
+of the actual result, so this metric is also included.
+
+Metric|First Simple Model|Latest Model
+------|------------------|------------
+Mean Poisson Deviance|.122|.143
+R-Squared|.111|.128
+% Within 5 Strikes|7.2%|47.7%
+
+#### Previous Iterations
+There is a notebook for each model iteration in the [modelling](notebooks/03_modelling) folder under the notebooks directory.
+Each iteration builds upon the previous iteration with new features added (or previous features removed). Each notebook
+is prefixed with a number indicating which iteration it is; these numbers can be matched up to corresponding notebooks
+in the data_cleaning and data_exploration folders. Each iteration follows this workflow:
+1. Import Data
+2. Split into X and y
+3. Split into train and test
+4. Scale (usually a StandardScaler, some used a MinMaxScaler)
+5. Cross validate
+6. Score on test set
+
 
 #### Next Steps
 This and previous model iterations can be found in the [notebooks/03_modelling](notebooks_03_modelling) folder. Attempts 
