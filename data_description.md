@@ -69,39 +69,43 @@ DOB|Date of birth
 name|fighter name recorded by UFC
 link|link to ufcstats.com fighter page
 
-#### general.csv
+#### rounds.csv
 Column|Meaning
 ------|-------
-fighter|fighter name
-kd|number of knockdowns
-sig_str|(successful significant strikes) of (total sig. strike attempts)
-sig_str_prcnt|% of sig. strikes that landed
-total_str|includes non-significant strikes-(successful strikes) of (total attempts)
-td_count|(successful takedowns) of (total attempts)
-td_prcnt|% of takedowns landed
-sub_att|number of submission attempts (unclear if it includes successes)
-pass|number of guard passes
-rev|number of reversals
-round|round which the row represents
-bout_id|link to bout page, should be named bout_link
-outcome|Whether the fighter won, loss, draw, etc
-fighter_link|link to fighter page
-
-#### strikes.csv
-Column|Meaning
-------|-------
-fighter|fighter name
-kd|number of knockdowns
-sig_str|(successful significant strikes) of (total sig. strike attempts)
-sig_str_prcnt|% of sig. strikes that landed
-head|(sig. strikes to opponents head) of (total head attempts)
-leg|(sig. strikes to opponents leg) of (total leg attempts)
-body|(sig. strikes to opponents body) of (total body attempts)
-distance|(sig. strikes while at a distance) of (total distance attempts)
-clinch|(sig. strikes while in a clinch) of (total clinch attempts)
-ground|(sig. strikes while on the ground) of (total ground attempts)
-round|round which the row represents
-bout_id|link to bout page, should be named bout_link
-outcome|Whether the fighter won, loss, draw, etc
-fighter_link|link to fighter page
+fighter     
+ss          
+h_ss        
+b_ss        
+l_ss        
+d_ss        
+c_ss        
+g_ss        
+kd          
+ts          
+td          
+sba         
+ps          
+rev         
+outcome     
+bout_id     
+fighter_id  
+round       
+ss_s        
+ss_a        
+h_ss_s      
+h_ss_a       
+b_ss_s       
+b_ss_a       
+l_ss_s       
+l_ss_a       
+d_ss_s       
+d_ss_a       
+c_ss_s       
+c_ss_a       
+g_ss_s       
+g_ss_a       
+ts_s         
+ts_a         
+td_s         
+td_a         
 
