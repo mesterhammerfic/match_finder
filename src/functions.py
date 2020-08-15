@@ -138,10 +138,23 @@ def calculate_metric_average(metric, fighter_id, date, df):
            df - dataframe, a fighter-instance table containing the metric
     output: float, the metric for the fighter up until the date
     """
+    # Subset the dataframe to fights with this fighter before this date
     fighter_history = df[(df['fighter_id']==fighter_id)&
-                         (df['date']<date)]
-    fighter_metric = fighter_history[metric].mean()
-    return fighter_metric
+                         (df['date']<date)].sort_values('date')
+    ca_fighter_metric = fighter_history[metric].mean()
+    
+    
+    # get the bout_id of a fighters last 3 fights and subset the df with those
+    last_3 = fighter_history['bout_id'].unique()[-3:]
+    mask = fighter_history['bout_id'].map(lambda x: True if x in last_3 else False)
+    last_3_stats=fighter_history[mask]
+    # if he has 3 or more fights then calculate the metric, if not, return null
+    if len(last_3_stats)>=3:
+        fa3_fighter_metric = last_3_stats[metric].mean()
+    else:
+        fa3_fighter_metric = pd.NA
+    
+    return (ca_fighter_metric, fa3_fighter_metric)
 
 def calculate_3_fight_average(metric, fighter_id, date, df):
     """
@@ -151,7 +164,7 @@ def calculate_3_fight_average(metric, fighter_id, date, df):
     output: float, the metric for the 3 fights prior to the date
     """
     fighter_history = df[(df['fighter_id']==fighter_id)&
-                         (df['date']<date)].sort_values('Date')
+                         (df['date']<date)]
 
     last_3 = fighter_history['bout_id'].unique()[-3:]
     mask = fighter_history['bout_id'].map(lambda x: True if x in last_3 else False)
@@ -238,9 +251,7 @@ def calculate_stats_alt(df, stat_list):
            stat - the type of technique being measured {sig_str, td, total_str, td, etc.}
     output: dataframe with the the following metrics calculated for each stat (ss, td, etc)
      - _pr_di - Per Round Differential
-     - _p1m - Per 1 Minute
      - _p15m - Per 15 Minute
-     - _p1m_di- Per 1 Minute Differential
      - _p15m_di - Attempts Per 15 Minute
     """
     #remove non-5-minute rounds
@@ -250,7 +261,6 @@ def calculate_stats_alt(df, stat_list):
     print('calculating minutes\n')
     data = get_minutes(data)
     for stat in stat_list:
-        data[stat+'_p1m'] = data[stat] / data.minutes
         data[stat+'_p15m'] = data[stat] / (data.minutes/15)
     
     # add opponent stats to each row for differential calculation
@@ -264,8 +274,6 @@ def calculate_stats_alt(df, stat_list):
         print(f'calculating differentials for {stat}\n')
         #per round differentials
         data[stat+'_pr_di_0'] = data[stat+'_0'] - data[stat+'_1']
-        #per minute differentials
-        data[stat+'_p1m_di_0'] = data[stat+'_p1m_0'] - data[stat+'_p1m_1']
         #per 15 minute differentials
         data[stat+'_p15m_di_0'] = data[stat+'_p15m_0'] - data[stat+'_p15m_1']
 
