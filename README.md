@@ -35,46 +35,27 @@ CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statist
 For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
 
 ### Modelling
+#### Target
+The target variable for all current model iterations is the Combined Average Distance Significant Strike Attempts per Minute of a match. This calculates the sum of the distance significant strike attempts per minute of both fighters. Distance strikes exclude clinch and ground strikes. Previous iterations calculated the combined significant strikes landed in the bout and the combined significant strike attempts per minute, both of which can be found in the archive folders in the notebooks/ directory. 'Combined Significant Strikes Landed in the Bout' was dropped because it failed to account for exciting fights with early finishes and title fights, which would increase or decrease the total number of strikes without indicating the level of activity. Combined Significant Strike Attempts per Minute accounts for early stoppages and 5 round fights by measure the rate of strikes, but this was dropped because it included the significant strikes on the ground, which are indicative of a grappling-centric match. The new target counts only distance and clinch strikes, which occur while both fighters are on their feet.
+
 #### First Simple Model
-The FSM for this project looked only at each fighters career average successful significant strikes per round and attempted
-to predict the combined total number of successful significant strikes for the entire bout. This target was changed because
-it does take into account differing match lengths. For instance, main event fights, which last 5 rounds will have significantly
-higher strike counts just because they last longer.
+The FSM for this project looked only at each fighters career average significant strike attempts per 15 minutes and attempted
+to predict the combined significant strike attempts per 15 minutes of both fighters in the bout. This model was a Linear Regressor
+and the data was scaled using sklearns standard scaler.
 
 
 #### Latest Model
-The latest model is a Poisson Regressor that uses 40 features to predict the Combined Significant Strike Attempts per 
-Minute in a single fight. The features included the 3 fight and career averages for Significant Strike Attempts per 
-Minute as well as differentials for grappling and striking stats including takedowns, ground strikes, distance strikes,
-etc. The features were scaled using sklearns Standard Scaler object which standardizes values. It's performance was 
-evaluated using the standard metric for Poisson regression, mean Poisson deviance, as well as r-squared, so that it 
-can be compared to other types of models easily. Our goal is to predict at least 95% of the matches to within 5 strikes 
-of the actual result, so this metric is also included.
+The latest model is a Linear Regressor that uses career averages for Significant Strike Attempts per 15 minutes and Takedown Attempts per 15 minutes as well as differentials for both of those stats. Differentials measure the difference in the rate of techniques used between a fighter and his opponent. For instance, if fighter A lands 50 strikes-per-minute, and fighter B lands 30 strikes-per-minute, fighter A has a strikes-per-minute-differential (S/PM-Di) of 20, and fighter B would be rated at -20.
 
 Metric|First Simple Model|Latest Model
 ------|------------------|------------
-Mean Poisson Deviance|.122|.143
-R-Squared|.111|.128
-% Within 5 Strikes|7.2%|47.7%
+R-Squared|.157|.180
 
-#### Previous Iterations
-There is a notebook for each model iteration in the [modelling](notebooks/03_modelling) folder under the notebooks directory.
-Each iteration builds upon the previous iteration with new features added (or previous features removed). Each notebook
-is prefixed with a number indicating which iteration it is; these numbers can be matched up to corresponding notebooks
-in the data_cleaning and data_exploration folders. Each iteration follows this workflow:
-1. Import Data
-2. Split into X and y
-3. Split into train and test
-4. Scale (usually a StandardScaler, some used a MinMaxScaler)
-5. Cross validate
-6. Score on test set
+#### Note on previous iterations
+Previous iterations, which used Combined Significant Strikes Landed in the Bout and Combined Significant Strike Attempts per Minute, incorporated career and 3 fight averages. These models failed to perform better than the latest model above. These iterations include attempts to include ground strike differentials, 3 fight averages, min-max scaling, and random forest regressors. Because these features were tested on different target variables, they should be revisited on the current target.
 
-
-#### Next Steps
-This and previous model iterations can be found in the [notebooks/03_modelling](notebooks_03_modelling) folder. Attempts 
-to implement min-max scaling, polynomial features, and Random Forest Regressors failed to improve model performance. 
-The features used are believed to lack enough predictive power for any significant improvement, so next steps will focus
-on the development of new features using the original data set.
+#### Next steps
+It's possible that career long averages don't capture a fighters current abilities because they could have gotten better or worse since their first few fights. This data set also includes fighters with only 1 or 2 fights, which likely does not include enough information to make reliable predictions. We will include 3 fight averages and exclude all fighters with less than 3 fights.
 
 ### Methodology
 This project follows the CRISP-DM model which starts with framing the problem using business understanding and cycles through
