@@ -27,7 +27,7 @@ events.csv |one UFC Event   |525                     |link
 bouts.csv  |one UFC bout    |5,688                   |link
 fighters.csv|one UFC fighter|2,045                   |link
 general.csv|one fighter in round|26,244              |bout_link + fighter_link + round
-events.csv |one fighter in round|26,244              |bout_link + fighter_link + round
+strikes.csv |one fighter in round|26,244              |bout_link + fighter_link + round
 
 ### 2. Scheme
 These 5 tables are then [transferred](notebooks/01_data_cleaning/00_create_database.ipynb) to a local postgresql database follow this schema:
