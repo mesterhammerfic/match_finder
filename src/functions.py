@@ -378,3 +378,16 @@ def merge_fighter_instances(instances_df, flip=False, rounds=False):
         return model_df
     
 
+"""
+===================================================================================
+Model Evaluation
+===================================================================================
+"""
+def compare_within_window(row, window=5):
+    """
+    givern a row for the dataframe above, returns True if the prediction is
+    within 5 strikes of the actual result.
+    """
+    pred = row['model_predictions']
+    true = row['actual_results']
+    return pred>=(true-window) and pred<=(true+window)
