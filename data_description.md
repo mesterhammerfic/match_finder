@@ -1,12 +1,12 @@
 ## Table of Contents:
 #### Data Overview
 #### 5 Tables from UFCstats
-1. [Table Summaries](https://github.com/mesterhammerfic/match_stats/new/master#1-table-summaries)
-2. [Schema](https://github.com/mesterhammerfic/match_stats/new/master#postgresql)
-3. [Data Dictionaries](https://github.com/mesterhammerfic/match_stats/new/master#3-data-dictionaries)
+1. [Table Summaries](https://github.com/mesterhammerfic/match_stats/blob/master/data_description.md#1-table-summaries)
+2. [Schema](https://github.com/mesterhammerfic/match_stats/blob/master/data_description.md#2-schema)
+3. [Data Dictionaries](https://github.com/mesterhammerfic/match_stats/blob/master/data_description.md#3-data-dictionaries)
 
 #### [12 Advanced Statistics Tables]
-1. [Data Dictionaries]
+1. [Data Dictionaries](https://github.com/mesterhammerfic/match_stats/blob/master/data_description.md#1-data-dictionaries)
 
 
 # Data Overview
@@ -35,7 +35,7 @@ align="center"
 alt="Markdown Monster icon"
 width="600"/>
 
-## 3. Data Dictionaries
+### 3. Data Dictionaries
 #### events.csv
 Column|Meaning
 ------|-------
