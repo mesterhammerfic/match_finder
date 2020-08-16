@@ -31,12 +31,12 @@ The data I'm using is scraped from the official [UFC stats website](http://www.u
 which provides round-by-round data on strikes and grappling techniques used in a fight for each fighter. I scraped data
 for every bout up until August 1st. The scraping and data preparation takes a significant amount of time, so I provided 
 the [data](data/ufcstats_data) with this repository through 5 CSVs, as well as 12 [advanced statistics](data/ufcstats_data/advanced_stats) 
-CSV files which were [generated](notebooks/01_data_cleaning/07c_advanced_statistics_by_round.ipynb) from those 5 original tables.
+CSV files which were generated from those 5 original tables.
 For more details on the data, including data dictionaries, checkout the data_descriptions file [here](data_description.md).
 
 ### Modelling
 #### Target
-The target variable for all current model iterations is the Combined Average Distance Significant Strike Attempts per Minute of a match. This calculates the sum of the distance significant strike attempts per minute of both fighters. Distance strikes exclude clinch and ground strikes. Previous iterations calculated the combined significant strikes landed in the bout and the combined significant strike attempts per minute, both of which can be found in the archive folders in the notebooks/ directory. 'Combined Significant Strikes Landed in the Bout' was dropped because it failed to account for exciting fights with early finishes and title fights, which would increase or decrease the total number of strikes without indicating the level of activity. Combined Significant Strike Attempts per Minute accounts for early stoppages and 5 round fights by measure the rate of strikes, but this was dropped because it included the significant strikes on the ground, which are indicative of a grappling-centric match. The new target counts only distance and clinch strikes, which occur while both fighters are on their feet.
+The target variable for the current model iterations is the Combined Average Standing Significant Strike Attempts per Minute of a match. This is is the sum of the distance and clinch strikes thrown by both fighters, and it excludes ground strikes. Previous iterations calculated the combined significant strikes landed in the bout and the combined significant strike attempts per minute, both of which can be found in the archive folders in the notebooks/ directory. 'Combined Significant Strikes Landed in the Bout' was dropped because it failed to account for exciting fights with early finishes and title fights, which would increase or decrease the total number of strikes without indicating the level of activity. Combined Significant Strike Attempts per Minute accounts for early stoppages and 5 round fights by measure the rate of strikes, but this was dropped because it included the significant strikes on the ground, which are indicative of a grappling-centric match. The new target counts only distance and clinch strikes, which occur while both fighters are on their feet.
 
 #### First Simple Model
 The FSM for this project looked only at each fighters career average significant strike attempts per 15 minutes and attempted
@@ -52,7 +52,7 @@ Metric|First Simple Model|Latest Model
 R-Squared|.157|.180
 
 #### Note on previous iterations
-Previous iterations, which used Combined Significant Strikes Landed in the Bout and Combined Significant Strike Attempts per Minute, incorporated career and 3 fight averages. These models failed to perform better than the latest model above. These iterations include attempts to include ground strike differentials, 3 fight averages, min-max scaling, and random forest regressors. Because these features were tested on different target variables, they should be revisited on the current target.
+Previous iterations, which used Combined Significant Strikes Landed in the Bout and Combined Significant Strike Attempts per Minute, incorporated career and 3 fight averages. These models failed to perform better than the latest model above. These iterations include attempts to include ground strike differentials, 3 fight averages, min-max scaling, and random forest regressors. Because these features were tested on different target variables, they should be revisited on the current target. You can find the records of these previous iterations in the archive folders in 01_feature_engineering, 02_data_exploration, and 03_modelling
 
 #### Next steps
 It's possible that career long averages don't capture a fighters current abilities because they could have gotten better or worse since their first few fights. This data set also includes fighters with only 1 or 2 fights, which likely does not include enough information to make reliable predictions. We will include 3 fight averages and exclude all fighters with less than 3 fights.
@@ -64,12 +64,12 @@ data understanding, data preperation, modelling, and evaluation before moving on
 <img src=references/CRISPDM_Process_Diagram.png width=400>
 
 Due to the high emphasis on feature engineering, the notebook directory in this project breaks this process down into three stages:
-1. 01_data_cleaning - new features are created using the original data set.
+1. 01_feature_engineering - new features are created using the original data set.
 2. 02_data_exploration - new features are examined and tested using EDA.
 3. 03_modelling - new features used on models to evaluate predictive abilities.
 
-The numbered prefixes of each notebook indicate which iteration they are a part of such that the 01 notebook in datacleaning
-is responsible for creating the features used in the 01 notebook of modelling.
+The numbered prefixes of each notebook indicate which iteration they are a part of such that the 01 notebook in 01_feature_engineering
+is responsible for creating the features used in the 01 notebook in 01_modelling.
 
 #### Technologies Used
 - Python
@@ -85,7 +85,7 @@ is responsible for creating the features used in the 01 notebook of modelling.
 ### Contributing/Reproducing
 1. Fork and clone this repo, which includes all necessary data
 2. [Set up](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) the project environment using Conda
-3. Run the 00_create_database notebook to set up your PostgreSQL data tables
+3. Run the 00_create_database and 01_advanced_statistics_by_round notebooks in the [data_preparation directory](notebooks/00_data_preparation) to set up your PostgreSQL data tables
 4. Follow the Methodolgy steps outlined in the previous section
 
 ### Directory Structure
@@ -100,11 +100,19 @@ project
 |
 └───notebooks
 │   │
-│   └───01_data_cleaned - All data cleaning and feature engineering
-│   │ 
+│   └───00_data_preparation - Creating SQL tables and advanced statistics tables
+│   │
+│   └───01_feature_engineering - All data cleaning and feature engineering
+│   │    │ 
+│   |    └───archive
+|   |
 │   └───02_data_exploration - All EDA
+│   │    │ 
+│   |    └───archive
 │   |
 │   └───03_modelling - All model iterations
+│        │ 
+│        └───archive
 |           
 └───references - literature and images used ofr research
 |
